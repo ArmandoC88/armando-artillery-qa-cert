@@ -1,0 +1,77 @@
+config:
+  target: "https://api.todoist.com"
+  phases:
+    - duration: 2
+      arrivalRate: 1
+      name: "Phase 1" #i add the variables section and environment
+  defaults:
+   headers:
+     Authorization: Bearer {{ $processEnvironment.TOKEN }} 
+     Content-Type: application/json
+  ##processor: "./myProcessor.js"
+  variables:
+    pname: 
+      - "Tletl"
+    urlp: 
+      - "/rest/v1/projects"
+    tname: 
+      - "Challenge"
+    urlt: 
+      - "/rest/v1/tasks"
+scenarios:
+  - flow:
+      - get:
+         # url: "/rest/v1/projects" #to get all projects
+          url: "{{ urlp }}" #to get all projects
+      - post:
+         # url: "/rest/v1/projects" #to create a project
+          url: "{{ urlp }}" #to create a project
+          json: 
+           name: "{{ pname }}"
+         #  name: "Tletl"
+          capture:
+           json: "$.id"
+           as: "idp"
+      - log: "idp is {{ idp }} and name is {{ pname }}"
+      - get: 
+         # url: "/rest/v1/projects/{{ idp }}" #to get a project
+          url: "{{ urlp }}/{{ idp }}" #to get a project
+      - get: 
+         # url: "/rest/v1/tasks" # Get active tasks
+          url: "{{ urlt }}" # Get active tasks
+      - post:
+         # url: "/rest/v1/tasks" # to create a new task inside the proyect
+          url: "{{ urlt }}" # to create a new task inside the proyect
+          json:
+           content: "{{ tname }}"
+          # content: "challenge"
+           due_string: "tomorrow at 8:00"
+           project_id: "{{ idp }}"
+          capture:
+           json: "$.id"
+           as: "taskid" 
+      - log: "task id is {{ taskid }} content is {{ tname }} "
+      - get: 
+         #  url: "/rest/v1/tasks/{{ taskid }}" # get an active task
+           url: "{{ urlt }}/{{ taskid }}" # get an active task
+      - post:
+         # url: "/rest/v1/tasks/{{ taskid }}" #to update a task in the project
+          url: "{{ urlt }}/{{ taskid }}" #to update a task in the project
+          json:
+           content: "Buy tomagochi"
+           due_string: "No Date"
+           project_id: "{{ idp }}" #here is all ok
+      - log: "task id is {{ taskid }} content: Buy tomagochi"
+      - post:
+         # url: "/rest/v1/tasks/{{ taskid }}/close" #to close a task
+          url: "{{ urlt }}/{{ taskid }}/close" #to close a task
+      - post:
+        #  url: "/rest/v1/tasks/{{ taskid }}/reopen" #to reopen a task
+          url: "{{ urlt }}/{{ taskid }}/reopen" #to reopen a task
+      - delete:
+        #  url: "/rest/v1/tasks/{{ taskid }}" #to delete a task
+          url: "{{ urlt }}/{{ taskid }}" #to delete a task
+      - delete:
+        #  url: "/rest/v1/projects/{{ idp }}" #to delete the project
+          url: "{{ urlp }}/{{ idp }}" #to delete the project
+# For more information: https://artillery.io/docs/script-reference/
